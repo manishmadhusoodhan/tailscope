@@ -39,6 +39,7 @@ func (s *Server) Router() http.Handler {
 		AllowedOrigins: []string{
 			"http://localhost:5173",
 			"http://localhost:5175",
+			"http://localhost:3000",
 		},
 
 		AllowedMethods: []string{

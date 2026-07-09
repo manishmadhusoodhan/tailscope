@@ -1,5 +1,5 @@
 APP=tailscope
-IMAGE=tailscope:latest
+IMAGE=log-viewer-be-1.0.0
 
 .PHONY: run build docker-build docker-run clean
 

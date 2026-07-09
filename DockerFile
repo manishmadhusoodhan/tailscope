@@ -1,21 +1,15 @@
-# syntax=docker/dockerfile:1.7
-
-############################
-# Build stage
-############################
-FROM golang:1.24.3 AS builder
+# ---------- Build stage ----------
+FROM golang:1.26.4 AS builder
 
 WORKDIR /src
 
 COPY go.mod go.sum ./
 
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 
 COPY . .
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 \
+RUN CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64 \
     go build \
@@ -24,12 +18,26 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     -o /tailscope \
     ./cmd
 
-############################
-# Runtime stage
-############################
+
+# ---------- Runtime stage ----------
 FROM alpine:3.22
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add \
+    ca-certificates \
+    curl
+
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
+    && rm kubectl
+
+# Install kubectl oidc-login plugin
+ARG KUBELOGIN_VERSION=v1.34.0
+RUN curl -L "https://github.com/int128/kubelogin/releases/download/${KUBELOGIN_VERSION}/kubelogin_linux_amd64.zip" -o kubelogin.zip \
+    && unzip kubelogin.zip \
+    && mv kubelogin /usr/local/bin/kubectl-oidc_login \
+    && chmod +x /usr/local/bin/kubectl-oidc_login \
+    && rm kubelogin.zip
 
 RUN addgroup -S tailscope && \
     adduser -S tailscope -G tailscope

@@ -1,0 +1,20 @@
+services:
+  backend:
+    image: ghcr.io/manishmadhusoodhan/log-viewer-be-1.0.0:latest
+    volumes:
+      - ${HOME}/.kube:/home/tailscope/.kube:ro
+      - ${HOME}/.kube/cache:/home/tailscope/.kube/cache:ro
+      - ${HOME}/.kube/oidc-login:/home/tailscope/.kube/oidc-login:ro
+    ports:
+      - "8080:8080" 
+    environment:
+      KUBECONFIG: /home/tailscope/.kube/config
+
+  frontend:
+    image: ghcr.io/manishmadhusoodhan/log-viewer-fe:1.0.0
+    container_name: log-viewer-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
